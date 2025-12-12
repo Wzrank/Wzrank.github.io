@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>温馨个人相册</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #fffaf7;
+            color: #5a4e4a;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* 首页样式 - 温馨色调 */
+        .home-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #ffe8e0 0%, #ffd6c9 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .home-page::before {
+            content: "";
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            top: -100px;
+            right: -100px;
+            z-index: 0;
+        }
+        
+        .home-page::after {
+            content: "";
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            bottom: -80px;
+            left: -80px;
+            z-index: 0;
+        }
+        
+        .welcome-container {
+            max-width: 800px;
+            z-index: 1;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        .welcome-title {
+            font-size: 3.5rem;
+            font-weight: 300;
+            margin-bottom: 20px;
+            color: #8b5a4a;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 3px rgba(139, 90, 74, 0.1);
+        }
+        
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            color: #a87c6f;
+            font-weight: 300;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.8;
+        }
+        
+        .enter-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background-color: #ff9a8b;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            border: 2px solid #ff9a8b;
+            box-shadow: 0 5px 15px rgba(255, 154, 139, 0.2);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            cursor: pointer;
+        }
+        
+        .enter-button:hover {
+            background-color: #ff7b6b;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 154, 139, 0.3);
+        }
+        
+        .enter-button:active {
+            transform: translateY(0);
+        }
+        
+        .scroll-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #a87c6f;
+            font-size: 0.9rem;
+            animation: bounce 2s infinite;
+        }
+        
+        .scroll-hint i {
+            margin-right: 8px;
+        }
+        
+        /* 相册页面样式 - 初始状态隐藏 */
+        .gallery-page {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ffd6c9;
+        }
+        
+        .gallery-title {
+            font-size: 2.2rem;
+            font-weight: 300;
+            color: #8b5a4a;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #a87c6f;
+            font-weight: 500;
+            transition: color 0.3s;
+            padding: 5px 0;
+            position: relative;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: #ff7b6b;
+        }
+        
+        /* 相册分类筛选 */
+        .gallery-filter {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 20px;
+            background-color: #ffefe9;
+            border: none;
+            border-radius: 30px;
+            color: #8b5a4a;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background-color: #ff9a8b;
+            color: white;
+        }
+        
+        /* 相册网格布局 - 一行4张图片 */
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+        
+        .photo-item {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(139, 90, 74, 0.08);
+            transition: all 0.3s ease;
+            background-color: white;
+            cursor: pointer;
+            border: 1px solid #ffefe9;
+        }
+        
+        .photo-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(139, 90, 74, 0.15);
+        }
+        
+        .photo-placeholder {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #ffefe9 0%, #ffd6c9 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #a87c6f;
+            transition: all 0.5s;
+        }
+        
+        .photo-item:hover .photo-placeholder {
+            background: linear-gradient(135deg, #ffd6c9 0%, #ffc5b5 100%);
+        }
+        
+        .photo-placeholder.empty {
+            background: linear-gradient(135deg, #ffefe9 0%, #ffd6c9 100%);
+            border: 2px dashed #ff9a8b;
+        }
+        
+        .placeholder-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ff9a8b;
+        }
+        
+        .placeholder-text {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .empty-photo-text {
+            color: #a87c6f;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .photo-info {
+            padding: 20px;
+        }
+        
+        .photo-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #8b5a4a;
+        }
+        
+        .photo-description {
+            color: #a87c6f;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .photo-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            color: #c9a59b;
+            font-size: 0.85rem;
+        }
+        
+        /* 相册底部信息 */
+        .gallery-footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #ffd6c9;
+            color: #a87c6f;
+        }
+        
+        .photo-count {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #8b5a4a;
+        }
+        
+        .gallery-description {
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+        
+        /* 添加照片区域 */
+        .add-photo-section {
+            background-color: #ffefe9;
+            border-radius: 12px;
+            padding: 40px;
+            margin-top: 60px;
+            border: 2px dashed #ff9a8b;
+        }
+        
+        .section-title {
+            color: #8b5a4a;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        
+        .add-photo-form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        .form-label {
+            margin-bottom: 8px;
+            color: #8b5a4a;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            padding: 12px 15px;
+            border: 1px solid #ffd6c9;
+            border-radius: 8px;
+            background-color: white;
+            color: #5a4e4a;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #ff9a8b;
+        }
+        
+        .form-select {
+            padding: 12px 15px;
+            border: 1px solid #ffd6c9;
+            border-radius: 8px;
+            background-color: white;
+            color: #5a4e4a;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .form-buttons {
+            grid-column: span 2;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        .form-button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .add-button {
+            background-color: #ff9a8b;
+            color: white;
+        }
+        
+        .add-button:hover {
+            background-color: #ff7b6b;
+        }
+        
+        .reset-button {
+            background-color: #ffd6c9;
+            color: #8b5a4a;
+        }
+        
+        .reset-button:hover {
+            background-color: #ffc5b5;
+        }
+        
+        /* 添加的照片列表 */
+        .added-photos {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid #ffd6c9;
+        }
+        
+        .added-title {
+            color: #8b5a4a;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .photos-list {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #fffaf7;
+            border-radius: 5px;
+        }
+        
+        .photo-code {
+            background-color: #f5f5f5;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #8b5a4a;
+            white-space: pre-wrap;
+        }
+        
+        .back-to-home {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #ff9a8b;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            box-shadow: 0 3px 10px rgba(255, 154, 139, 0.3);
+            transition: all 0.3s;
+            z-index: 100;
+            cursor: pointer;
+        }
+        
+        .back-to-home:hover {
+            background-color: #ff7b6b;
+            transform: scale(1.1);
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+            40% { transform: translateY(-10px) translateX(-50%); }
+            60% { transform: translateY(-5px) translateX(-50%); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .gallery-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .gallery-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .add-photo-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group.full-width, .form-buttons {
+                grid-column: span 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .welcome-title {
+                font-size: 2.5rem;
+            }
+            
+            .gallery-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .nav-links {
+                gap: 20px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .gallery-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .enter-button {
+                padding: 12px 30px;
+            }
+            
+            .photo-placeholder {
+                height: 220px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 首页 -->
+    <div class="home-page" id="homePage">
+        <div class="welcome-container">
+            <h1 class="welcome-title">欢迎光临Lefting</h1>
+            <p class="welcome-subtitle">这里是Lefting和Counter相册空间，记录生活美好瞬间</p>
+            <button class="enter-button" id="enterButton">
+                点击进入相册 <i class="fas fa-images"></i>
+            </button>
+        </div>
+        <div class="scroll-hint">
+            <i class="fas fa-mouse"></i> 点击上方按钮进入相册
+        </div>
+    </div>
+    
+    <!-- 相册页面 -->
+    <div class="gallery-page" id="galleryPage">
+        <header class="gallery-header">
+            <h1 class="gallery-title">我们的温馨相册</h1>
+            <nav class="nav-links">
+            </nav>
+        </header>
+        
+        <!-- 相册分类筛选 -->
+        <div class="gallery-filter">
+            <button class="filter-btn active" data-filter="all">全部</button>
+            <button class="filter-btn" data-filter="nature">图片</button>
+            <button class="filter-btn" data-filter="city">视频</button>
+        </div>
+        
+        <!-- 相册网格 -->
+        <div class="gallery-container" id="galleryContainer">
+            <!-- 照片将通过JavaScript动态生成 -->
+        </div>
+        
+        <!-- 相册底部信息 -->
+        <div class="gallery-footer">
+            <div class="photo-count">共 <span id="photoCount">8</span> 张照片</div>
+            <p class="gallery-description">
+                这个相册记录了zt and zzw生活中的美好瞬间。每一张照片背后都有一个故事，或是一段旅程，或是一次相遇，或是一份感动。
+            </p>
+        </div>
+        
+        <!-- 添加照片区域 -->
+        <div class="add-photo-section">
+            <h2 class="section-title">添加新照片</h2>
+            
+            <div class="add-photo-form">
+                <div class="form-group">
+                    <label class="form-label">照片标题</label>
+                    <input type="text" id="photoTitle" class="form-input" placeholder="请输入照片标题" value="美丽的风景">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">分类</label>
+                    <select id="photoCategory" class="form-select">
+                        <option value="nature">自然风景</option>
+                        <option value="city">城市街景</option>
+                        <option value="portrait">人物肖像</option>
+                        <option value="travel">旅行记录</option>
+                    </select>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label class="form-label">照片描述</label>
+                    <input type="text" id="photoDescription" class="form-input" placeholder="请输入照片描述" value="这是我在旅行中拍摄的一张美丽风景照片">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">拍摄日期</label>
+                    <input type="text" id="photoDate" class="form-input" placeholder="例如：2023年10月15日" value="2023年10月15日">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">拍摄地点</label>
+                    <input type="text" id="photoLocation" class="form-input" placeholder="请输入拍摄地点" value="云南大理">
+                </div>
+                
+                <div class="form-group full-width">
+                    <label class="form-label">图片URL</label>
+                    <input type="text" id="photoUrl" class="form-input" placeholder="请输入图片的完整URL地址" value="">
+                </div>
+                
+                <div class="form-buttons">
+                    <button type="button" class="form-button add-button" id="addPhotoBtn">添加照片</button>
+                    <button type="button" class="form-button reset-button" id="resetFormBtn">重置表单</button>
+                </div>
+            </div>
+            
+            <!-- 添加的照片代码显示区域 -->
+            <div class="added-photos">
+                <h3 class="added-title">已添加的照片（点击查看代码）</h3>
+                <div class="photos-list" id="photosList">
+                    <!-- 添加的照片信息将显示在这里 -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="back-to-home" id="backToHome">
+            <i class="fas fa-home"></i>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取主要元素
+            const enterButton = document.getElementById('enterButton');
+            const backToHome = document.getElementById('backToHome');
+            const homePage = document.getElementById('homePage');
+            const galleryPage = document.getElementById('galleryPage');
+            const galleryContainer = document.getElementById('galleryContainer');
+            const photoCount = document.getElementById('photoCount');
+            const addPhotoBtn = document.getElementById('addPhotoBtn');
+            const resetFormBtn = document.getElementById('resetFormBtn');
+            const photosList = document.getElementById('photosList');
+            
+            // 相册数据 - 现在使用let以便动态添加
+            let photos = [
+                {
+                    id: 1,
+                    title: " ",
+                    description: " ",
+                    category: "nature",
+                    date: "2025年12月10日",
+                    location: "黄山",
+                    likes: 999,
+                    src: "1.jpg"
+                },
+                {
+                    id: 2,
+                    title: " ",
+                    description: " ",
+                    category: "nature",
+                    date: "2025年12月10日",
+                    location: "黄山",
+                    likes: 999,
+                    src: "2.jpg"
+                },
+                {
+                    id: 3,
+                    title: " ",
+                    description: " ",
+                    category: "nature",
+                    date: "2025年12月10日",
+                    location: "黄山",
+                    likes: 999,
+                    src: "3.jpg"
+                },
+                {
+                    id: 4,
+                    title: " ",
+                    description: " ",
+                    category: "nature",
+                    date: "2025年12月10日",
+                    location: "黄山",
+                    likes: 999,
+                    src: "4.jpg"
+                },
+                {
+                  id: 5,
+                    title: " ",
+                    description: " ",
+                    category: "nature",
+                    date: "2025年12月10日",
+                    location: "黄山",
+                    likes: 999,
+                    src: "5.jpg"
+                },
+                {
+                    id: 6,
+                    title: " ",
+                    description: " ",
+                    category: "nature",
+                    date: "2025年12月10日",
+                    location: "黄山",
+                    likes: 999,
+                    src: "6.jpg"
+                },
+                {
+                   id: 7,
+                    title: " ",
+                    description: " ",
+                    category: "nature",
+                    date: "2025年12月10日",
+                    location: "黄山",
+                    likes: 999,
+                    src: "7.jpg"
+                },
+                {
+                   id: 8,
+                    title: " ",
+                    description: " ",
+                    category: "nature",
+                    date: "2025年12月10日",
+                    location: "黄山",
+                    likes: 999,
+                    src: "8.jpg"
+                }
+            ];
+            
+            // 存储用户添加的照片
+            let addedPhotos = [];
+            
+            // 渲染相册
+            function renderGallery() {
+                galleryContainer.innerHTML = '';
+                
+                // 首先渲染现有的照片
+                photos.forEach((photo, index) => {
+                    createPhotoElement(photo);
+                });
+                
+                // 然后渲染用户添加的空位照片
+                addedPhotos.forEach((photo, index) => {
+                    createEmptyPhotoElement(photo);
+                });
+                
+                // 更新照片数量
+                if (photoCount) {
+                    photoCount.textContent = photos.length + addedPhotos.length;
+                }
+            }
+            
+            // 创建普通照片元素
+            function createPhotoElement(photo) {
+                const photoItem = document.createElement('div');
+                photoItem.className = `photo-item`;
+                photoItem.innerHTML = `
+                    <div class="photo-placeholder">
+                        <i class="fas fa-image placeholder-icon"></i>
+                        <div class="placeholder-text">${photo.title}</div>
+                    </div>
+                    <div class="photo-info">
+                        <h3 class="photo-title">${photo.title}</h3>
+                        <p class="photo-description">${photo.description}</p>
+                        <div class="photo-meta">
+                            <span><i class="far fa-calendar"></i> ${photo.date}</span>
+                            <span><i class="fas fa-heart"></i> ${photo.likes} 喜欢</span>
+                        </div>
+                    </div>
+                `;
+                
+                // 如果有图片URL，则加载图片
+                if (photo.src) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const placeholder = photoItem.querySelector('.photo-placeholder');
+                        placeholder.style.backgroundImage = `url('${photo.src}')`;
+                        placeholder.style.backgroundSize = 'cover';
+                        placeholder.style.backgroundPosition = 'center';
+                        placeholder.innerHTML = '';
+                    };
+                    img.src = photo.src;
+                }
+                
+                galleryContainer.appendChild(photoItem);
+            }
+            
+            // 创建空位照片元素（给用户添加的照片留位置）
+            function createEmptyPhotoElement(photo) {
+                const photoItem = document.createElement('div');
+                photoItem.className = `photo-item`;
+                photoItem.innerHTML = `
+                    <div class="photo-placeholder empty">
+                        <i class="fas fa-plus-circle placeholder-icon"></i>
+                        <div class="placeholder-text">${photo.title}</div>
+                        <div class="empty-photo-text">点击查看添加代码</div>
+                    </div>
+                    <div class="photo-info">
+                        <h3 class="photo-title">${photo.title} <span style="color:#ff9a8b; font-size:0.8rem;">(待添加图片)</span></h3>
+                        <p class="photo-description">${photo.description}</p>
+                        <div class="photo-meta">
+                            <span><i class="far fa-calendar"></i> ${photo.date}</span>
+                            <span><i class="fas fa-map-marker-alt"></i> ${photo.location}</span>
+                        </div>
+                    </div>
+                `;
+                
+                // 点击空位照片时显示代码
+                photoItem.addEventListener('click', function() {
+                    const code = generatePhotoCode(photo);
+                    alert(`请将以下代码添加到源代码中（大约第200行）：\n\n${code}`);
+                });
+                
+                galleryContainer.appendChild(photoItem);
+            }
+            
+            // 生成照片代码
+            function generatePhotoCode(photo) {
+                return `{
+  id: ${photos.length + addedPhotos.length + 1},
+  title: "${photo.title}",
+  description: "${photo.description}",
+  category: "${photo.category}",
+  date: "${photo.date}",
+  location: "${photo.location}",
+  likes: 0,
+  src: "${photo.src || '请在此处添加图片URL'}"
+}`;
+            }
+            
+            // 更新已添加的照片列表
+            function updateAddedPhotosList() {
+                photosList.innerHTML = '';
+                addedPhotos.forEach((photo, index) => {
+                    const codeElement = document.createElement('div');
+                    codeElement.className = 'photo-code';
+                    codeElement.textContent = `照片 ${index + 1}: ${photo.title}`;
+                    codeElement.style.cursor = 'pointer';
+                    
+                    codeElement.addEventListener('click', function() {
+                        const code = generatePhotoCode(photo);
+                        alert(`请将以下代码添加到源代码中：\n\n${code}`);
+                    });
+                    
+                    photosList.appendChild(codeElement);
+                });
+            }
+            
+            // 进入相册按钮点击事件
+            enterButton.addEventListener('click', function() {
+                homePage.style.display = 'none';
+                galleryPage.style.display = 'block';
+                renderGallery();
+                updateAddedPhotosList();
+                window.scrollTo(0, 0);
+            });
+            
+            // 返回首页按钮点击事件
+            backToHome.addEventListener('click', function() {
+                galleryPage.style.display = 'none';
+                homePage.style.display = 'flex';
+            });
+            
+            // 筛选按钮事件
+            document.querySelectorAll('.filter-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // 更新活动按钮
+                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.getAttribute('data-filter');
+                    
+                    if (filter === 'all') {
+                        renderGallery();
+                    }
+                });
+            });
+            
+            // 添加照片按钮事件
+            addPhotoBtn.addEventListener('click', function() {
+                const title = document.getElementById('photoTitle').value;
+                const category = document.getElementById('photoCategory').value;
+                const description = document.getElementById('photoDescription').value;
+                const date = document.getElementById('photoDate').value;
+                const location = document.getElementById('photoLocation').value;
+                const url = document.getElementById('photoUrl').value;
+                
+                if (title && description && date && location) {
+                    // 创建新照片对象
+                    const newPhoto = {
+                        id: photos.length + addedPhotos.length + 1,
+                        title: title,
+                        description: description,
+                        category: category,
+                        date: date,
+                        location: location,
+                        likes: 0,
+                        src: url || '' // 如果没有URL，留空
+                    };
+                    
+                    // 添加到已添加照片列表
+                    addedPhotos.push(newPhoto);
+                    
+                    // 重新渲染相册
+                    renderGallery();
+                    
+                    // 更新已添加照片列表
+                    updateAddedPhotosList();
+                    
+                    // 显示成功消息
+                    alert(`已成功添加照片: "${title}"\n\n相册中已为您预留位置。\n请查看下方"已添加的照片"区域获取代码，然后将其添加到源代码中。`);
+                    
+                    // 重置表单
+                    document.getElementById('resetFormBtn').click();
+                    
+                    // 滚动到添加的照片区域
+                    document.querySelector('.added-photos').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('请至少填写标题、描述、日期和地点！');
+                }
+            });
+            
+            // 重置表单按钮事件
+            resetFormBtn.addEventListener('click', function() {
+                document.getElementById('photoTitle').value = '';
+                document.getElementById('photoCategory').value = 'nature';
+                document.getElementById('photoDescription').value = '';
+                document.getElementById('photoDate').value = '';
+                document.getElementById('photoLocation').value = '';
+                document.getElementById('photoUrl').value = '';
+            });
+            
+            // 初始化
+            renderGallery();
+        });
+    </script>
+</body>
+</html>
